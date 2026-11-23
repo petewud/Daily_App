@@ -66,6 +66,25 @@ jobs:
         working-directory: android-project
         run: python3 ../fix_pdf.py
 
+      - name: Make emulator smoke test resilient to Pixel Launcher ANR
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import ast
+          path = Path('android-project/tools/smoke_test.py')
+          source = path.read_text(encoding='utf-8')
+          marker = '# PIXEL_LAUNCHER_TEST_RECOVERY_V1'
+          wrapper = '_launcher_recoveries = 0\n\ndef hierarchy(name):\n global _launcher_recoveries\n for attempt in range(3):\n  tree = raw_hierarchy(name)\n  try:\n   screenshot(name + \'-observed-\' + str(attempt))\n  except Exception as error:\n   print(\'Could not capture screenshot:\', error)\n  texts = \' \'.join(n.get(\'text\', \'\') for n in tree.iter(\'node\'))\n  launcher_dialog = "Pixel Launcher isn\'t responding" in texts or \'Pixel Launcher isn’t responding\' in texts\n  if not launcher_dialog:\n   return tree\n  # Only this specifically identified SYSTEM launcher failure may be recovered.\n  # Never close/ignore an ANR for A Day To Keep or accept its crash-report screen.\n  ET.ElementTree(tree).write(out / (name + \'-pixel-launcher-anr-\' + str(attempt) + \'.xml\'), encoding=\'utf-8\', xml_declaration=True)\n  if _launcher_recoveries >= 2:\n   raise RuntimeError(\'Pixel Launcher repeatedly stopped responding; emulator environment is not healthy\')\n  close = next((node for node in tree.iter(\'node\') if node.get(\'resource-id\') == \'android:id/aerr_close\'), None)\n  if close is None:\n   raise RuntimeError(\'Pixel Launcher ANR detected, but Close app button was not found\')\n  bounds = [int(x) for x in re.findall(r\'\\d+\', close.get(\'bounds\', \'\'))]\n  if len(bounds) != 4:\n   raise RuntimeError(\'Cannot read Pixel Launcher dialog button bounds\')\n  _launcher_recoveries += 1\n  print(\'Recovering emulator Pixel Launcher ANR; recovery\', _launcher_recoveries)\n  with (out / \'launcher-recovery.txt\').open(\'a\') as report:\n   report.write(name + \': closed Pixel Launcher ANR and relaunched target activity\\n\')\n  adb(\'shell\', \'input\', \'tap\', str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))\n  time.sleep(3)\n  result = adb(\'shell\', \'am\', \'start\', \'-W\', \'-n\', package + \'/.MainActivity\')\n  (out / (name + \'-relaunch-\' + str(attempt) + \'.txt\')).write_text(result)\n  if \'Error:\' in result or \'Exception\' in result:\n   raise RuntimeError(\'Could not relaunch target app: \' + result)\n  time.sleep(6)\n  alive()\n raise RuntimeError(\'Could not recover emulator launcher dialog\')\n\n'
+          if marker not in source:
+              if source.count('def hierarchy(name):') != 1 or 'def screenshot(name):' not in source:
+                  raise SystemExit('Unexpected smoke test layout. Refusing to modify an unknown test.')
+              source = source.replace('def hierarchy(name):', 'def raw_hierarchy(name):', 1)
+              source = source.replace('def screenshot(name):', marker + '\n' + wrapper + 'def screenshot(name):', 1)
+              ast.parse(source)
+              path.write_text(source, encoding='utf-8')
+          print('Smoke test retains all app checks, records screens before assertions, and recovers only Pixel Launcher ANRs.')
+          PY
+
       - name: Build updated APK
         working-directory: android-project
         run: gradle --no-daemon --stacktrace assembleDebug
@@ -85,10 +104,13 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
-          disable-animations: false
+          disable-animations: true
           emulator-boot-timeout: 600
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
-          script: python3 android-project/tools/smoke_test.py
+          script: |
+            adb wait-for-device
+            sleep 15
+            python3 android-project/tools/smoke_test.py
 
       - name: Upload startup screenshots and diagnostic logs
         if: always()
