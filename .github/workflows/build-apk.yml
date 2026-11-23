@@ -1,10 +1,11 @@
-name: Build Little Days APK
+name: Build A Day To Keep
 
 on:
   workflow_dispatch:
   push:
     paths:
       - 'LittleDays.zip'
+      - 'update_app.py'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -13,7 +14,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -35,54 +36,61 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Extract project
+      - name: Extract existing project
         run: |
-          test -f LittleDays.zip || { echo "Upload LittleDays.zip to the repository root first."; exit 1; }
+          test -f LittleDays.zip || { echo "LittleDays.zip must remain in the repository root."; exit 1; }
+          test -f update_app.py || { echo "Upload update_app.py to the repository root."; exit 1; }
           mkdir -p android-project
           unzip -q LittleDays.zip -d android-project
           test -f android-project/settings.gradle
           echo "sdk.dir=$ANDROID_HOME" > android-project/local.properties
 
-      - name: Fix Android API compatibility
+      - name: Apply A Day To Keep update
         working-directory: android-project
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("app/src/main/java/uk/co/littledays/MainActivity.java")
-          s = p.read_text(encoding="utf-8")
-          fixes = [
-              (
-                  'java.nio.file.Files.readString(new File(staging,"data.json").toPath())',
-                  'new String(java.nio.file.Files.readAllBytes(new File(staging,"data.json").toPath()), java.nio.charset.StandardCharsets.UTF_8)',
-              ),
-              (
-                  'try(android.graphics.pdf.PdfDocument pdf=new android.graphics.pdf.PdfDocument()){',
-                  'android.graphics.pdf.PdfDocument pdf=new android.graphics.pdf.PdfDocument();try{',
-              ),
-              (
-                  'w.finish();pdf.writeTo(out);}}',
-                  'w.finish();pdf.writeTo(out);}finally{pdf.close();}}',
-              ),
-          ]
-          for old, new in fixes:
-              if old in s:
-                  if s.count(old) != 1:
-                      raise SystemExit("Unexpected source layout; refusing an ambiguous replacement")
-                  s = s.replace(old, new, 1)
-              elif new not in s:
-                  raise SystemExit("Project source differs from the expected version; cannot safely apply fix")
-          p.write_text(s, encoding="utf-8")
-          print("Applied both Android API compatibility fixes.")
-          PY
+        run: python3 ../update_app.py
 
-      - name: Build APK
+      - name: Build updated APK
         working-directory: android-project
         run: gradle --no-daemon --stacktrace assembleDebug
 
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: Little-Days-APK
+          name: A-Day-To-Keep-APK
           path: android-project/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Package complete updated source
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile, shutil
+          root=Path('android-project')
+          shutil.copy2('update_app.py',root/'update_app.py')
+          (root/'.github/workflows').mkdir(parents=True,exist_ok=True)
+          shutil.copy2('.github/workflows/build-apk.yml',root/'.github/workflows/build-apk.yml')
+          Path('updated-source').mkdir(exist_ok=True)
+          with zipfile.ZipFile('updated-source/LittleDays.zip','w',zipfile.ZIP_DEFLATED) as archive:
+              for p in root.rglob('*'):
+                  if not p.is_file():
+                      continue
+                  relative=p.relative_to(root)
+                  if any(part in ('build','.gradle','.idea') for part in relative.parts):
+                      continue
+                  if relative.name=='local.properties':
+                      continue
+                  archive.write(p,relative.as_posix())
+          with zipfile.ZipFile('updated-source/LittleDays.zip') as archive:
+              assert archive.testzip() is None
+              assert 'signing/personal.p12' in archive.namelist()
+          PY
+
+      - name: Upload complete updated project
+        uses: actions/upload-artifact@v4
+        with:
+          name: A-Day-To-Keep-Updated-Project-PRIVATE
+          path: updated-source/LittleDays.zip
           if-no-files-found: error
           retention-days: 30
