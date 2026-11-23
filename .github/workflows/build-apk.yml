@@ -7,6 +7,7 @@ on:
       - 'LittleDays.zip'
       - 'update_app.py'
       - 'update_style.py'
+      - 'update_refine.py'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -39,9 +40,9 @@ jobs:
 
       - name: Extract existing project
         run: |
-          test -f LittleDays.zip || { echo "Keep LittleDays.zip in the repository root."; exit 1; }
-          test -f update_app.py || { echo "Keep your existing update_app.py in the repository root."; exit 1; }
-          test -f update_style.py || { echo "Upload update_style.py to the repository root."; exit 1; }
+          for file in LittleDays.zip update_app.py update_style.py update_refine.py; do
+            test -f "$file" || { echo "Missing repository file: $file"; exit 1; }
+          done
           mkdir -p android-project
           unzip -q LittleDays.zip -d android-project
           test -f android-project/settings.gradle
@@ -51,9 +52,13 @@ jobs:
         working-directory: android-project
         run: python3 ../update_app.py
 
-      - name: Apply version 3 artwork and layout update
+      - name: Prepare existing version 3 illustrations
         working-directory: android-project
         run: python3 ../update_style.py
+
+      - name: Apply version 4 scheduling and layout changes
+        working-directory: android-project
+        run: python3 ../update_refine.py
 
       - name: Build updated APK
         working-directory: android-project
@@ -73,7 +78,7 @@ jobs:
           from pathlib import Path
           import zipfile, shutil
           root=Path('android-project')
-          for name in ('update_app.py','update_style.py'):
+          for name in ('update_app.py','update_style.py','update_refine.py'):
               shutil.copy2(name,root/name)
           (root/'.github/workflows').mkdir(parents=True,exist_ok=True)
           shutil.copy2('.github/workflows/build-apk.yml',root/'.github/workflows/build-apk.yml')
@@ -89,7 +94,7 @@ jobs:
           with zipfile.ZipFile('updated-source/LittleDays.zip') as z:
               assert z.testzip() is None
               assert 'signing/personal.p12' in z.namelist()
-              assert b'A_DAY_TO_KEEP_V3' in z.read('app/src/main/java/uk/co/littledays/MainActivity.java')
+              assert b'A_DAY_TO_KEEP_V4' in z.read('app/src/main/java/uk/co/littledays/MainActivity.java')
           PY
 
       - name: Upload complete updated project
