@@ -14,7 +14,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -43,6 +42,38 @@ jobs:
           unzip -q LittleDays.zip -d android-project
           test -f android-project/settings.gradle
           echo "sdk.dir=$ANDROID_HOME" > android-project/local.properties
+
+      - name: Fix Android API compatibility
+        working-directory: android-project
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("app/src/main/java/uk/co/littledays/MainActivity.java")
+          s = p.read_text(encoding="utf-8")
+          fixes = [
+              (
+                  'java.nio.file.Files.readString(new File(staging,"data.json").toPath())',
+                  'new String(java.nio.file.Files.readAllBytes(new File(staging,"data.json").toPath()), java.nio.charset.StandardCharsets.UTF_8)',
+              ),
+              (
+                  'try(android.graphics.pdf.PdfDocument pdf=new android.graphics.pdf.PdfDocument()){',
+                  'android.graphics.pdf.PdfDocument pdf=new android.graphics.pdf.PdfDocument();try{',
+              ),
+              (
+                  'w.finish();pdf.writeTo(out);}}',
+                  'w.finish();pdf.writeTo(out);}finally{pdf.close();}}',
+              ),
+          ]
+          for old, new in fixes:
+              if old in s:
+                  if s.count(old) != 1:
+                      raise SystemExit("Unexpected source layout; refusing an ambiguous replacement")
+                  s = s.replace(old, new, 1)
+              elif new not in s:
+                  raise SystemExit("Project source differs from the expected version; cannot safely apply fix")
+          p.write_text(s, encoding="utf-8")
+          print("Applied both Android API compatibility fixes.")
+          PY
 
       - name: Build APK
         working-directory: android-project
