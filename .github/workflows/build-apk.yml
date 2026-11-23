@@ -8,6 +8,7 @@ on:
       - 'update_app.py'
       - 'update_style.py'
       - 'update_refine.py'
+      - 'fix_pdf.py'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -16,7 +17,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -40,7 +41,7 @@ jobs:
 
       - name: Extract existing project
         run: |
-          for file in LittleDays.zip update_app.py update_style.py update_refine.py; do
+          for file in LittleDays.zip fix_pdf.py; do
             test -f "$file" || { echo "Missing repository file: $file"; exit 1; }
           done
           mkdir -p android-project
@@ -48,23 +49,57 @@ jobs:
           test -f android-project/settings.gradle
           echo "sdk.dir=$ANDROID_HOME" > android-project/local.properties
 
-      - name: Prepare existing version 2 source
+      - name: Prepare previous changes if needed
+        shell: bash
         working-directory: android-project
-        run: python3 ../update_app.py
+        run: |
+          if grep -q A_DAY_TO_KEEP_V5 app/src/main/java/uk/co/littledays/MainActivity.java; then
+            echo "Using complete version 5 project; no earlier patch steps needed."
+          else
+            for file in update_app.py update_style.py update_refine.py; do
+              test -f "../$file" || { echo "Missing repository file: $file"; exit 1; }
+              python3 "../$file"
+            done
+          fi
 
-      - name: Prepare existing version 3 illustrations
+      - name: Apply startup repair and PDF attachments
         working-directory: android-project
-        run: python3 ../update_style.py
-
-      - name: Apply version 4 scheduling and layout changes
-        working-directory: android-project
-        run: python3 ../update_refine.py
+        run: python3 ../fix_pdf.py
 
       - name: Build updated APK
         working-directory: android-project
         run: gradle --no-daemon --stacktrace assembleDebug
 
-      - name: Upload installable APK
+      - name: Enable emulator acceleration
+        run: |
+          if [ ! -e /dev/kvm ]; then
+            echo "This runner does not expose /dev/kvm. Use GitHub's standard ubuntu-latest runner."
+            exit 1
+          fi
+          sudo chmod 666 /dev/kvm
+
+      - name: Test actual app startup and navigation
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
+          script: python3 android-project/tools/smoke_test.py
+
+      - name: Upload startup screenshots and diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: A-Day-To-Keep-Startup-Diagnostics
+          path: startup-diagnostics/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload installable APK after successful launch test
         uses: actions/upload-artifact@v4
         with:
           name: A-Day-To-Keep-APK
@@ -78,23 +113,24 @@ jobs:
           from pathlib import Path
           import zipfile, shutil
           root=Path('android-project')
-          for name in ('update_app.py','update_style.py','update_refine.py'):
-              shutil.copy2(name,root/name)
+          for name in ('update_app.py','update_style.py','update_refine.py','fix_pdf.py'):
+              if Path(name).is_file():
+                  shutil.copy2(name,root/name)
           (root/'.github/workflows').mkdir(parents=True,exist_ok=True)
           shutil.copy2('.github/workflows/build-apk.yml',root/'.github/workflows/build-apk.yml')
           Path('updated-source').mkdir(exist_ok=True)
-          with zipfile.ZipFile('updated-source/LittleDays.zip','w',zipfile.ZIP_DEFLATED) as z:
+          with zipfile.ZipFile('updated-source/LittleDays.zip','w',zipfile.ZIP_DEFLATED) as archive:
               for p in root.rglob('*'):
                   if not p.is_file():
                       continue
-                  rel=p.relative_to(root)
-                  if any(part in ('build','.gradle','.idea') for part in rel.parts) or rel.name=='local.properties':
+                  relative=p.relative_to(root)
+                  if any(part in ('build','.gradle','.idea') for part in relative.parts) or relative.name=='local.properties':
                       continue
-                  z.write(p,rel.as_posix())
-          with zipfile.ZipFile('updated-source/LittleDays.zip') as z:
-              assert z.testzip() is None
-              assert 'signing/personal.p12' in z.namelist()
-              assert b'A_DAY_TO_KEEP_V4' in z.read('app/src/main/java/uk/co/littledays/MainActivity.java')
+                  archive.write(p,relative.as_posix())
+          with zipfile.ZipFile('updated-source/LittleDays.zip') as archive:
+              assert archive.testzip() is None
+              assert 'signing/personal.p12' in archive.namelist()
+              assert b'A_DAY_TO_KEEP_V5' in archive.read('app/src/main/java/uk/co/littledays/MainActivity.java')
           PY
 
       - name: Upload complete updated project
