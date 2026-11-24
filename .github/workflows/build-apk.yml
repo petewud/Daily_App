@@ -16,6 +16,7 @@ name: Build A Day To Keep
     - update_studio.py
     - update_edgefix.py
     - update_comfort.py
+    - fix_calendar.py
     - .github/workflows/build-apk.yml
 permissions:
   contents: read
@@ -42,7 +43,7 @@ jobs:
         gradle-version: '8.9'
     - name: Extract existing project
       run: |
-        for file in LittleDays.zip update_polish.py fix_writing.py update_round.py update_preferences.py update_bloom.py update_studio.py update_edgefix.py update_comfort.py; do
+        for file in LittleDays.zip update_polish.py fix_writing.py update_round.py update_preferences.py update_bloom.py update_studio.py update_edgefix.py update_comfort.py fix_calendar.py; do
           test -f "$file" || { echo "Missing repository file: $file"; exit 1; }
         done
         mkdir -p android-project
@@ -92,26 +93,26 @@ jobs:
       run: |
         python3 ../update_edgefix.py
       working-directory: android-project
-    - name: Apply version 7.1 notes, controls, notifications and themes
+    - name: Preserve version 7.1 notes, controls, notifications and themes
       run: |
         python3 ../update_comfort.py
       working-directory: android-project
-    - name: Validate both the startup repair and the new UI source
+    - name: Repair Unicode calendar arrow direction and labels
       run: |
-        python3 - <<'PY'
-        from pathlib import Path
-        source=Path('app/src/main/java/uk/co/littledays/MainActivity.java').read_text()
-        assert '// A_DAY_TO_KEEP_EDGEFIX_703' in source
-        assert '// A_DAY_TO_KEEP_COMFORT_71' in source
-        assert 'w.getDecorView().post(() -> {' in source
-        assert 'if(controller!=null)controller.setSystemBarsAppearance' in source
-        assert source.count('new ThemeSpec(') >= 43
-        assert 'class NoteBoard extends ViewGroup' in source
-        assert 'startDragAndDrop(' in source and 'noteOrder' in source
-        assert 'class RoundedTimeWheel extends NumberPicker' in source
-        assert Path('app/src/main/res/drawable/ic_notification_bunny.xml').is_file()
-        assert any('.setSmallIcon(uk.co.littledays.R.drawable.ic_notification_bunny)' in f.read_text() for f in Path('app/src/main/java/uk/co/littledays').glob('*.java'))
-        PY
+        python3 ../fix_calendar.py
+      working-directory: android-project
+    - name: Validate startup, UI updates and both calendar directions
+      run: "python3 - <<'PY'\nfrom pathlib import Path\nsource=Path('app/src/main/java/uk/co/littledays/MainActivity.java').read_text()\n\
+        assert '// A_DAY_TO_KEEP_EDGEFIX_703' in source\nassert '// A_DAY_TO_KEEP_COMFORT_71' in source\nassert\
+        \ '// A_DAY_TO_KEEP_CALENDAR_711' in source\nassert 'w.getDecorView().post(() -> {' in source\nassert 'if(controller!=null)controller.setSystemBarsAppearance'\
+        \ in source\nassert source.count('new ThemeSpec(') >= 43\nassert 'class NoteBoard extends ViewGroup' in\
+        \ source\nassert 'startDragAndDrop(' in source and 'noteOrder' in source\nassert 'class RoundedTimeWheel\
+        \ extends NumberPicker' in source\nassert Path('app/src/main/res/drawable/ic_notification_bunny.xml').is_file()\n\
+        assert any('.setSmallIcon(uk.co.littledays.R.drawable.ic_notification_bunny)' in f.read_text() for f in\
+        \ Path('app/src/main/java/uk/co/littledays').glob('*.java'))\nassert 'boolean previous=symbol.equals(\"\
+        <\")||symbol.equals(\"\u2039\");' in source\nassert 'setContentDescription(previous?\"Previous month\":\"\
+        Next month\")' in source\nassert 'new CalendarChevron(previous)' in source\nfor symbol,expected in [('<',True),('\u2039\
+        ',True),('>',False),('\u203A',False)]:\n    assert (symbol=='<' or symbol=='\u2039')==expected\nPY\n"
       working-directory: android-project
     - name: Build updated APK
       run: |
@@ -159,7 +160,7 @@ jobs:
         from pathlib import Path
         import zipfile, shutil
         root=Path('android-project')
-        for name in ('update_app.py','update_style.py','update_refine.py','fix_pdf.py','update_polish.py','fix_writing.py','update_round.py','update_preferences.py','update_bloom.py','update_studio.py','update_edgefix.py','update_comfort.py'):
+        for name in ('update_app.py','update_style.py','update_refine.py','fix_pdf.py','update_polish.py','fix_writing.py','update_round.py','update_preferences.py','update_bloom.py','update_studio.py','update_edgefix.py','update_comfort.py','fix_calendar.py'):
             if Path(name).is_file():
                 shutil.copy2(name,root/name)
         (root/'.github/workflows').mkdir(parents=True,exist_ok=True)
@@ -180,6 +181,7 @@ jobs:
             source=archive.read('app/src/main/java/uk/co/littledays/MainActivity.java')
             assert b'A_DAY_TO_KEEP_EDGEFIX_703' in source
             assert b'A_DAY_TO_KEEP_COMFORT_71' in source
+            assert b'A_DAY_TO_KEEP_CALENDAR_711' in source
         PY
     - name: Upload complete updated project
       uses: actions/upload-artifact@v4
