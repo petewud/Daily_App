@@ -11,6 +11,7 @@ on:
       - 'fix_pdf.py'
       - 'update_polish.py'
       - 'fix_writing.py'
+      - 'update_round.py'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -43,7 +44,7 @@ jobs:
 
       - name: Extract existing project
         run: |
-          for file in LittleDays.zip update_polish.py fix_writing.py; do
+          for file in LittleDays.zip update_polish.py fix_writing.py update_round.py; do
             test -f "$file" || { echo "Missing repository file: $file"; exit 1; }
           done
           mkdir -p android-project
@@ -71,9 +72,13 @@ jobs:
         working-directory: android-project
         run: python3 ../update_polish.py
 
-      - name: Repair journal keyboard detection and writing layout
+      - name: Preserve the working journal keyboard repair
         working-directory: android-project
         run: python3 ../fix_writing.py
+
+      - name: Apply version 6.2 clipping, animation and radial widget update
+        working-directory: android-project
+        run: python3 ../update_round.py
 
       - name: Build updated APK
         working-directory: android-project
@@ -125,7 +130,7 @@ jobs:
           from pathlib import Path
           import zipfile, shutil
           root=Path('android-project')
-          for name in ('update_app.py','update_style.py','update_refine.py','fix_pdf.py','update_polish.py','fix_writing.py'):
+          for name in ('update_app.py','update_style.py','update_refine.py','fix_pdf.py','update_polish.py','fix_writing.py','update_round.py'):
               if Path(name).is_file():
                   shutil.copy2(name,root/name)
           (root/'.github/workflows').mkdir(parents=True,exist_ok=True)
@@ -143,7 +148,7 @@ jobs:
               assert archive.testzip() is None
               assert 'signing/personal.p12' in archive.namelist()
               assert 'app/src/main/java/uk/co/littledays/KeepWidget.java' in archive.namelist()
-              assert b'A_DAY_TO_KEEP_WRITING_FIX_61' in archive.read('app/src/main/java/uk/co/littledays/MainActivity.java')
+              assert b'A_DAY_TO_KEEP_ROUND_62' in archive.read('app/src/main/java/uk/co/littledays/MainActivity.java')
           PY
 
       - name: Upload complete updated project
