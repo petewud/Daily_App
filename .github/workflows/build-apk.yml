@@ -106,11 +106,11 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           source=Path('app/src/main/java/uk/co/littledays/MainActivity.java').read_text()
-          assert '// A_DAY_TO_KEEP_EDGEFIX_702' in source
+          assert '// A_DAY_TO_KEEP_EDGEFIX_703' in source
           assert 'w.getDecorView().post(() -> {' in source
           assert 'if(controller!=null)controller.setSystemBarsAppearance' in source
           assert 'void edgeToEdge(){Window w=getWindow();w.setDecorFitsSystemWindows(false);' in source
-          assert source.count('->') >= 1
+          assert 'w.getDecorView().post(()->{try{' not in source
           PY
 
       - name: Build updated APK
@@ -181,7 +181,7 @@ jobs:
               assert archive.testzip() is None
               assert 'signing/personal.p12' in archive.namelist()
               assert 'app/src/main/java/uk/co/littledays/KeepCountWidget.java' in archive.namelist()
-              assert b'A_DAY_TO_KEEP_EDGEFIX_702' in archive.read('app/src/main/java/uk/co/littledays/MainActivity.java')
+              assert b'A_DAY_TO_KEEP_EDGEFIX_703' in archive.read('app/src/main/java/uk/co/littledays/MainActivity.java')
           PY
 
       - name: Upload complete updated project
