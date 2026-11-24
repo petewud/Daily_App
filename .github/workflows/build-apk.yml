@@ -15,6 +15,7 @@ on:
       - 'update_preferences.py'
       - 'update_bloom.py'
       - 'update_studio.py'
+      - 'update_edgefix.py'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -47,7 +48,7 @@ jobs:
 
       - name: Extract existing project
         run: |
-          for file in LittleDays.zip update_polish.py fix_writing.py update_round.py update_preferences.py update_bloom.py update_studio.py; do
+          for file in LittleDays.zip update_polish.py fix_writing.py update_round.py update_preferences.py update_bloom.py update_studio.py update_edgefix.py; do
             test -f "$file" || { echo "Missing repository file: $file"; exit 1; }
           done
           mkdir -p android-project
@@ -91,24 +92,25 @@ jobs:
         working-directory: android-project
         run: python3 ../update_bloom.py
 
-      - name: Validate the existing theme and widget baseline
+      - name: Preserve the studio update
+        working-directory: android-project
+        run: python3 ../update_studio.py
+
+      - name: Apply the edge-to-edge crash repair
+        working-directory: android-project
+        run: python3 ../update_edgefix.py
+
+      - name: Validate the edge-to-edge repair
         working-directory: android-project
         run: |
           python3 - <<'PY'
           from pathlib import Path
           source=Path('app/src/main/java/uk/co/littledays/MainActivity.java').read_text()
-          assert '// A_DAY_TO_KEEP_BLOOM_64' in source
-          assert source.count('new ThemeSpec(') >= 31
-          assert 'GradientDrawable border=shape(Color.TRANSPARENT);' not in source
-          assert 'class ThemeMenuViewport extends FrameLayout' in source
-          widget=Path('app/src/main/java/uk/co/littledays/KeepWidget.java').read_text()
-          assert 'paint.setColor(pink);c.drawCircle(center,center,104,paint);' in widget
-          assert Path('app/src/main/java/uk/co/littledays/KeepCountWidget.java').is_file()
+          assert '// A_DAY_TO_KEEP_EDGEFIX_701' in source
+          assert 'w.getDecorView().post(()->{try{WindowInsetsController controller=w.getInsetsController();' in source
+          assert 'if(controller!=null)controller.setSystemBarsAppearance' in source
+          assert 'controller.setSystemBarsAppearance(WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS' in source
           PY
-
-      - name: Apply the latest studio update
-        working-directory: android-project
-        run: python3 ../update_studio.py
 
       - name: Build updated APK
         working-directory: android-project
@@ -160,7 +162,7 @@ jobs:
           from pathlib import Path
           import zipfile, shutil
           root=Path('android-project')
-          for name in ('update_app.py','update_style.py','update_refine.py','fix_pdf.py','update_polish.py','fix_writing.py','update_round.py','update_preferences.py','update_bloom.py','update_studio.py'):
+          for name in ('update_app.py','update_style.py','update_refine.py','fix_pdf.py','update_polish.py','fix_writing.py','update_round.py','update_preferences.py','update_bloom.py','update_studio.py','update_edgefix.py'):
               if Path(name).is_file():
                   shutil.copy2(name,root/name)
           (root/'.github/workflows').mkdir(parents=True,exist_ok=True)
@@ -178,8 +180,7 @@ jobs:
               assert archive.testzip() is None
               assert 'signing/personal.p12' in archive.namelist()
               assert 'app/src/main/java/uk/co/littledays/KeepCountWidget.java' in archive.namelist()
-              assert 'app/src/main/java/uk/co/littledays/MainActivity.java' in archive.namelist()
-              assert 'update_studio.py' in archive.namelist()
+              assert b'A_DAY_TO_KEEP_EDGEFIX_701' in archive.read('app/src/main/java/uk/co/littledays/MainActivity.java')
           PY
 
       - name: Upload complete updated project
