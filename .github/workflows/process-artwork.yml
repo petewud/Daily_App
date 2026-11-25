@@ -1,0 +1,28 @@
+name: Process artwork
+
+on:
+  workflow_dispatch:
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install image libraries
+        run: pip install pillow numpy
+
+      - name: Process original artwork
+        run: python scripts/process_artwork.py
+
+      - name: Upload corrected artwork
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrected-artwork
+          path: artwork/output
