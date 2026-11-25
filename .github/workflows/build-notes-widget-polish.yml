@@ -1,0 +1,96 @@
+name: Build Notes and widget polish 7.3.3
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pillow numpy scipy pyyaml
+      - name: Recreate approved artwork
+        run: python scripts/process_artwork_v3.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Prepare working 7.3.2 and refine Notes and widget
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess,yaml,json
+          steps=yaml.safe_load(Path('.github/workflows/build-detail-polish.yml').read_text())['jobs']['build']['steps']
+          matches=[s for s in steps if s.get('name')=='Prepare working 7.3.1 and refine details']
+          assert len(matches)==1
+          subprocess.run(['bash','-e','-o','pipefail','-c',matches[0]['run']],check=True)
+          subprocess.run(['python3','../scripts/update_notes_widget_733.py'],cwd='android-project',check=True)
+          s=Path('android-project/app/src/main/java/uk/co/littledays/MainActivity.java').read_text()
+          assert 'A_DAY_TO_KEEP_NOTES_WIDGET_733' in s
+          assert 'NotesThumb733 notesThumb' in s
+          w=Path('android-project/app/src/main/java/uk/co/littledays/KeepWidget.java').read_text()
+          assert 'COUNT_BAND_733' in w and 'countBaseline' in w
+          assert json.loads(Path('android-project/ui-amendments-report.json').read_text())['version']=='7.3.3'
+          PY
+      - name: Build updated APK
+        working-directory: android-project
+        run: gradle --no-daemon --stacktrace assembleDebug
+      - name: Enable emulator acceleration
+        run: |
+          test -e /dev/kvm
+          sudo chmod 666 /dev/kvm
+      - name: Test startup, calendars, journal, themes and widgets
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
+          script: |
+            adb wait-for-device
+            sleep 15
+            python3 android-project/tools/smoke_test.py
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: UI-7.3.3-Diagnostics
+          path: |
+            startup-diagnostics/
+            android-project/ui-amendments-report.json
+            android-project/artwork-integration-report.json
+          if-no-files-found: warn
+      - name: Upload APK after successful tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: A-Day-To-Keep-7.3.3-APK
+          path: android-project/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+      - name: Package private complete source using existing checks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess,yaml
+          steps=yaml.safe_load(Path('.github/workflows/build-detail-polish.yml').read_text())['jobs']['build']['steps']
+          matches=[s for s in steps if s.get('name')=='Package private complete source using existing checks']
+          assert len(matches)==1
+          subprocess.run(['bash','-e','-o','pipefail','-c',matches[0]['run']],check=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: A-Day-To-Keep-7.3.3-Source-PRIVATE
+          path: updated-source/LittleDays.zip
+          if-no-files-found: error
+          retention-days: 30
