@@ -1,0 +1,838 @@
+{
+  "meta": {
+    "image": "props_atlas.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 1024,
+      "h": 1024
+    },
+    "grid": {
+      "rows": 6,
+      "columns": 7,
+      "total_sprites": 39
+    }
+  },
+  "sprites": [
+    {
+      "name": "carrot",
+      "x": 41,
+      "y": 50,
+      "width": 92,
+      "height": 97,
+      "grid_row": 0,
+      "grid_col": 0
+    },
+    {
+      "name": "strawberry",
+      "x": 193,
+      "y": 54,
+      "width": 71,
+      "height": 90,
+      "grid_row": 0,
+      "grid_col": 1
+    },
+    {
+      "name": "flower",
+      "x": 325,
+      "y": 54,
+      "width": 91,
+      "height": 89,
+      "grid_row": 0,
+      "grid_col": 2
+    },
+    {
+      "name": "cloud",
+      "x": 464,
+      "y": 64,
+      "width": 96,
+      "height": 70,
+      "grid_row": 0,
+      "grid_col": 3
+    },
+    {
+      "name": "star",
+      "x": 611,
+      "y": 57,
+      "width": 85,
+      "height": 83,
+      "grid_row": 0,
+      "grid_col": 4
+    },
+    {
+      "name": "rainbow",
+      "x": 738,
+      "y": 62,
+      "width": 114,
+      "height": 74,
+      "grid_row": 0,
+      "grid_col": 5
+    },
+    {
+      "name": "honey",
+      "x": 890,
+      "y": 48,
+      "width": 94,
+      "height": 101,
+      "grid_row": 0,
+      "grid_col": 6
+    },
+    {
+      "name": "bee",
+      "x": 46,
+      "y": 218,
+      "width": 81,
+      "height": 92,
+      "grid_row": 1,
+      "grid_col": 0
+    },
+    {
+      "name": "lily",
+      "x": 182,
+      "y": 221,
+      "width": 94,
+      "height": 86,
+      "grid_row": 1,
+      "grid_col": 1
+    },
+    {
+      "name": "lotus",
+      "x": 322,
+      "y": 228,
+      "width": 96,
+      "height": 71,
+      "grid_row": 1,
+      "grid_col": 2
+    },
+    {
+      "name": "dragonfly",
+      "x": 466,
+      "y": 216,
+      "width": 91,
+      "height": 97,
+      "grid_row": 1,
+      "grid_col": 3
+    },
+    {
+      "name": "moon",
+      "x": 611,
+      "y": 218,
+      "width": 86,
+      "height": 91,
+      "grid_row": 1,
+      "grid_col": 4
+    },
+    {
+      "name": "planet",
+      "x": 743,
+      "y": 228,
+      "width": 105,
+      "height": 72,
+      "grid_row": 1,
+      "grid_col": 5
+    },
+    {
+      "name": "sparkle",
+      "x": 903,
+      "y": 226,
+      "width": 68,
+      "height": 77,
+      "grid_row": 1,
+      "grid_col": 6
+    },
+    {
+      "name": "mushroom",
+      "x": 39,
+      "y": 376,
+      "width": 95,
+      "height": 106,
+      "grid_row": 2,
+      "grid_col": 0
+    },
+    {
+      "name": "acorn",
+      "x": 193,
+      "y": 380,
+      "width": 72,
+      "height": 99,
+      "grid_row": 2,
+      "grid_col": 1
+    },
+    {
+      "name": "leaf",
+      "x": 333,
+      "y": 375,
+      "width": 75,
+      "height": 109,
+      "grid_row": 2,
+      "grid_col": 2
+    },
+    {
+      "name": "bamboo",
+      "x": 470,
+      "y": 375,
+      "width": 85,
+      "height": 108,
+      "grid_row": 2,
+      "grid_col": 3
+    },
+    {
+      "name": "dumpling",
+      "x": 608,
+      "y": 391,
+      "width": 91,
+      "height": 76,
+      "grid_row": 2,
+      "grid_col": 4
+    },
+    {
+      "name": "teacup",
+      "x": 746,
+      "y": 389,
+      "width": 99,
+      "height": 81,
+      "grid_row": 2,
+      "grid_col": 5
+    },
+    {
+      "name": "shell",
+      "x": 893,
+      "y": 390,
+      "width": 88,
+      "height": 79,
+      "grid_row": 2,
+      "grid_col": 6
+    },
+    {
+      "name": "seaweed",
+      "x": 47,
+      "y": 541,
+      "width": 80,
+      "height": 108,
+      "grid_row": 3,
+      "grid_col": 0
+    },
+    {
+      "name": "bubble",
+      "x": 188,
+      "y": 551,
+      "width": 81,
+      "height": 88,
+      "grid_row": 3,
+      "grid_col": 1
+    },
+    {
+      "name": "peach",
+      "x": 327,
+      "y": 548,
+      "width": 87,
+      "height": 94,
+      "grid_row": 3,
+      "grid_col": 2
+    },
+    {
+      "name": "daisy",
+      "x": 466,
+      "y": 549,
+      "width": 92,
+      "height": 91,
+      "grid_row": 3,
+      "grid_col": 3
+    },
+    {
+      "name": "crystal",
+      "x": 612,
+      "y": 546,
+      "width": 83,
+      "height": 97,
+      "grid_row": 3,
+      "grid_col": 4
+    },
+    {
+      "name": "yarn",
+      "x": 741,
+      "y": 541,
+      "width": 108,
+      "height": 107,
+      "grid_row": 3,
+      "grid_col": 5
+    },
+    {
+      "name": "sakura",
+      "x": 892,
+      "y": 551,
+      "width": 91,
+      "height": 88,
+      "grid_row": 3,
+      "grid_col": 6
+    },
+    {
+      "name": "orange",
+      "x": 47,
+      "y": 714,
+      "width": 80,
+      "height": 92,
+      "grid_row": 4,
+      "grid_col": 0
+    },
+    {
+      "name": "snowflake",
+      "x": 187,
+      "y": 712,
+      "width": 84,
+      "height": 96,
+      "grid_row": 4,
+      "grid_col": 1
+    },
+    {
+      "name": "potion",
+      "x": 332,
+      "y": 708,
+      "width": 76,
+      "height": 105,
+      "grid_row": 4,
+      "grid_col": 2
+    },
+    {
+      "name": "lemon",
+      "x": 469,
+      "y": 712,
+      "width": 86,
+      "height": 96,
+      "grid_row": 4,
+      "grid_col": 3
+    },
+    {
+      "name": "butterfly",
+      "x": 604,
+      "y": 720,
+      "width": 99,
+      "height": 80,
+      "grid_row": 4,
+      "grid_col": 4
+    },
+    {
+      "name": "coffee",
+      "x": 751,
+      "y": 717,
+      "width": 89,
+      "height": 86,
+      "grid_row": 4,
+      "grid_col": 5
+    },
+    {
+      "name": "umbrella",
+      "x": 886,
+      "y": 708,
+      "width": 103,
+      "height": 104,
+      "grid_row": 4,
+      "grid_col": 6
+    },
+    {
+      "name": "maple_leaf",
+      "x": 42,
+      "y": 873,
+      "width": 90,
+      "height": 104,
+      "grid_row": 5,
+      "grid_col": 0
+    },
+    {
+      "name": "heart",
+      "x": 189,
+      "y": 889,
+      "width": 79,
+      "height": 72,
+      "grid_row": 5,
+      "grid_col": 1
+    },
+    {
+      "name": "blueberry",
+      "x": 322,
+      "y": 885,
+      "width": 96,
+      "height": 81,
+      "grid_row": 5,
+      "grid_col": 2
+    },
+    {
+      "name": "lavender",
+      "x": 478,
+      "y": 876,
+      "width": 67,
+      "height": 99,
+      "grid_row": 5,
+      "grid_col": 3
+    }
+  ],
+  "frames": {
+    "carrot": {
+      "frame": {
+        "x": 41,
+        "y": 50,
+        "w": 92,
+        "h": 97
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 97
+      }
+    },
+    "strawberry": {
+      "frame": {
+        "x": 193,
+        "y": 54,
+        "w": 71,
+        "h": 90
+      },
+      "sourceSize": {
+        "w": 71,
+        "h": 90
+      }
+    },
+    "flower": {
+      "frame": {
+        "x": 325,
+        "y": 54,
+        "w": 91,
+        "h": 89
+      },
+      "sourceSize": {
+        "w": 91,
+        "h": 89
+      }
+    },
+    "cloud": {
+      "frame": {
+        "x": 464,
+        "y": 64,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      }
+    },
+    "star": {
+      "frame": {
+        "x": 611,
+        "y": 57,
+        "w": 85,
+        "h": 83
+      },
+      "sourceSize": {
+        "w": 85,
+        "h": 83
+      }
+    },
+    "rainbow": {
+      "frame": {
+        "x": 738,
+        "y": 62,
+        "w": 114,
+        "h": 74
+      },
+      "sourceSize": {
+        "w": 114,
+        "h": 74
+      }
+    },
+    "honey": {
+      "frame": {
+        "x": 890,
+        "y": 48,
+        "w": 94,
+        "h": 101
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 101
+      }
+    },
+    "bee": {
+      "frame": {
+        "x": 46,
+        "y": 218,
+        "w": 81,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 81,
+        "h": 92
+      }
+    },
+    "lily": {
+      "frame": {
+        "x": 182,
+        "y": 221,
+        "w": 94,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 86
+      }
+    },
+    "lotus": {
+      "frame": {
+        "x": 322,
+        "y": 228,
+        "w": 96,
+        "h": 71
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 71
+      }
+    },
+    "dragonfly": {
+      "frame": {
+        "x": 466,
+        "y": 216,
+        "w": 91,
+        "h": 97
+      },
+      "sourceSize": {
+        "w": 91,
+        "h": 97
+      }
+    },
+    "moon": {
+      "frame": {
+        "x": 611,
+        "y": 218,
+        "w": 86,
+        "h": 91
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 91
+      }
+    },
+    "planet": {
+      "frame": {
+        "x": 743,
+        "y": 228,
+        "w": 105,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 105,
+        "h": 72
+      }
+    },
+    "sparkle": {
+      "frame": {
+        "x": 903,
+        "y": 226,
+        "w": 68,
+        "h": 77
+      },
+      "sourceSize": {
+        "w": 68,
+        "h": 77
+      }
+    },
+    "mushroom": {
+      "frame": {
+        "x": 39,
+        "y": 376,
+        "w": 95,
+        "h": 106
+      },
+      "sourceSize": {
+        "w": 95,
+        "h": 106
+      }
+    },
+    "acorn": {
+      "frame": {
+        "x": 193,
+        "y": 380,
+        "w": 72,
+        "h": 99
+      },
+      "sourceSize": {
+        "w": 72,
+        "h": 99
+      }
+    },
+    "leaf": {
+      "frame": {
+        "x": 333,
+        "y": 375,
+        "w": 75,
+        "h": 109
+      },
+      "sourceSize": {
+        "w": 75,
+        "h": 109
+      }
+    },
+    "bamboo": {
+      "frame": {
+        "x": 470,
+        "y": 375,
+        "w": 85,
+        "h": 108
+      },
+      "sourceSize": {
+        "w": 85,
+        "h": 108
+      }
+    },
+    "dumpling": {
+      "frame": {
+        "x": 608,
+        "y": 391,
+        "w": 91,
+        "h": 76
+      },
+      "sourceSize": {
+        "w": 91,
+        "h": 76
+      }
+    },
+    "teacup": {
+      "frame": {
+        "x": 746,
+        "y": 389,
+        "w": 99,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 81
+      }
+    },
+    "shell": {
+      "frame": {
+        "x": 893,
+        "y": 390,
+        "w": 88,
+        "h": 79
+      },
+      "sourceSize": {
+        "w": 88,
+        "h": 79
+      }
+    },
+    "seaweed": {
+      "frame": {
+        "x": 47,
+        "y": 541,
+        "w": 80,
+        "h": 108
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 108
+      }
+    },
+    "bubble": {
+      "frame": {
+        "x": 188,
+        "y": 551,
+        "w": 81,
+        "h": 88
+      },
+      "sourceSize": {
+        "w": 81,
+        "h": 88
+      }
+    },
+    "peach": {
+      "frame": {
+        "x": 327,
+        "y": 548,
+        "w": 87,
+        "h": 94
+      },
+      "sourceSize": {
+        "w": 87,
+        "h": 94
+      }
+    },
+    "daisy": {
+      "frame": {
+        "x": 466,
+        "y": 549,
+        "w": 92,
+        "h": 91
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 91
+      }
+    },
+    "crystal": {
+      "frame": {
+        "x": 612,
+        "y": 546,
+        "w": 83,
+        "h": 97
+      },
+      "sourceSize": {
+        "w": 83,
+        "h": 97
+      }
+    },
+    "yarn": {
+      "frame": {
+        "x": 741,
+        "y": 541,
+        "w": 108,
+        "h": 107
+      },
+      "sourceSize": {
+        "w": 108,
+        "h": 107
+      }
+    },
+    "sakura": {
+      "frame": {
+        "x": 892,
+        "y": 551,
+        "w": 91,
+        "h": 88
+      },
+      "sourceSize": {
+        "w": 91,
+        "h": 88
+      }
+    },
+    "orange": {
+      "frame": {
+        "x": 47,
+        "y": 714,
+        "w": 80,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 92
+      }
+    },
+    "snowflake": {
+      "frame": {
+        "x": 187,
+        "y": 712,
+        "w": 84,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 84,
+        "h": 96
+      }
+    },
+    "potion": {
+      "frame": {
+        "x": 332,
+        "y": 708,
+        "w": 76,
+        "h": 105
+      },
+      "sourceSize": {
+        "w": 76,
+        "h": 105
+      }
+    },
+    "lemon": {
+      "frame": {
+        "x": 469,
+        "y": 712,
+        "w": 86,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 96
+      }
+    },
+    "butterfly": {
+      "frame": {
+        "x": 604,
+        "y": 720,
+        "w": 99,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 80
+      }
+    },
+    "coffee": {
+      "frame": {
+        "x": 751,
+        "y": 717,
+        "w": 89,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 89,
+        "h": 86
+      }
+    },
+    "umbrella": {
+      "frame": {
+        "x": 886,
+        "y": 708,
+        "w": 103,
+        "h": 104
+      },
+      "sourceSize": {
+        "w": 103,
+        "h": 104
+      }
+    },
+    "maple_leaf": {
+      "frame": {
+        "x": 42,
+        "y": 873,
+        "w": 90,
+        "h": 104
+      },
+      "sourceSize": {
+        "w": 90,
+        "h": 104
+      }
+    },
+    "heart": {
+      "frame": {
+        "x": 189,
+        "y": 889,
+        "w": 79,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 79,
+        "h": 72
+      }
+    },
+    "blueberry": {
+      "frame": {
+        "x": 322,
+        "y": 885,
+        "w": 96,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 81
+      }
+    },
+    "lavender": {
+      "frame": {
+        "x": 478,
+        "y": 876,
+        "w": 67,
+        "h": 99
+      },
+      "sourceSize": {
+        "w": 67,
+        "h": 99
+      }
+    }
+  }
+}
