@@ -135,12 +135,14 @@ def validate_props() -> dict:
             continue
 
         detected_x, detected_y, detected_right, detected_bottom = detected
+        detected_width = detected_right - detected_x
+        detected_height = detected_bottom - detected_y
         tolerance = 3
         matches = (
             abs(detected_x) <= tolerance
             and abs(detected_y) <= tolerance
-            and abs((x + width) - detected_right) <= tolerance
-            and abs((y + height) - detected_bottom) <= tolerance
+            and abs(detected_width - width) <= tolerance
+            and abs(detected_height - height) <= tolerance
         )
         results.append(
             {
@@ -150,8 +152,8 @@ def validate_props() -> dict:
                 "detected_rectangle": {
                     "x": x + detected_x,
                     "y": y + detected_y,
-                    "width": detected_right - detected_x,
-                    "height": detected_bottom - detected_y,
+                    "width": detected_width,
+                    "height": detected_height,
                 },
             }
         )
