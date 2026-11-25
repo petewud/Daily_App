@@ -1,28 +1,24 @@
 name: Process artwork
-
 on:
   workflow_dispatch:
-
+permissions:
+  contents: read
 jobs:
   process:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install image libraries
         run: pip install pillow numpy
-
-      - name: Process original artwork
-        run: python scripts/process_artwork.py
-
-      - name: Upload corrected artwork
+      - name: Normalise and verify artwork
+        run: python scripts/normalise_artwork.py
+      - name: Upload outputs and review report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: corrected-artwork
+          name: corrected-artwork-v2
           path: artwork/output
+          if-no-files-found: error
