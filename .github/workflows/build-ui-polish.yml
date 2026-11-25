@@ -1,0 +1,99 @@
+name: Build UI polish 7.3
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pillow numpy scipy pyyaml
+      - name: Recreate approved v3 artwork
+        run: python scripts/process_artwork_v3.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Prepare working artwork build and apply UI amendments
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess,yaml
+          steps=yaml.safe_load(Path('.github/workflows/build-artwork-preview.yml').read_text())['jobs']['build']['steps']
+          for name in ['Prepare the working app and all existing repairs','Integrate mapped artwork without reindexing themes']:
+              matches=[s for s in steps if s.get('name')==name]
+              assert len(matches)==1,name
+              step=matches[0]
+              subprocess.run(['bash','-e','-o','pipefail','-c',step['run']],cwd=step.get('working-directory','.'),check=True)
+          subprocess.run(['python3','../scripts/update_ui.py'],cwd='android-project',check=True)
+          for step in steps:
+              if step.get('name')=='Verify retained repairs and new assets':
+                  subprocess.run(['bash','-e','-o','pipefail','-c',step['run']],check=True)
+          s=Path('android-project/app/src/main/java/uk/co/littledays/MainActivity.java').read_text()
+          for token in ['A_DAY_TO_KEEP_UI_73','Take today at your own pace','A little structure. A little space.','Keep a little note','Done editing','if(justCompleted)root.post(','celebrateStarted+1300','semanticButtons(d)','themedScrolls(root)']:
+              assert token in s,token
+          assert 'Pinch to zoom' not in s[s.index('void viewer(LocalDate d,String file){'):s.index('void viewer(LocalDate d,String file){')+6000]
+          PY
+      - name: Build updated APK
+        working-directory: android-project
+        run: gradle --no-daemon --stacktrace assembleDebug
+      - name: Enable emulator acceleration
+        run: |
+          test -e /dev/kvm
+          sudo chmod 666 /dev/kvm
+      - name: Test startup, calendars, journal, themes and widgets
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
+          script: |
+            adb wait-for-device
+            sleep 15
+            python3 android-project/tools/smoke_test.py
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: UI-7.3-Diagnostics
+          path: |
+            startup-diagnostics/
+            android-project/ui-amendments-report.json
+            android-project/artwork-integration-report.json
+          if-no-files-found: warn
+      - name: Upload APK after successful tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: A-Day-To-Keep-7.3-APK
+          path: android-project/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+      - name: Package private complete source using existing packaging checks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess,yaml
+          steps=yaml.safe_load(Path('.github/workflows/build-artwork-preview.yml').read_text())['jobs']['build']['steps']
+          matches=[s for s in steps if s.get('name')=='Package complete private source including original signing files']
+          assert len(matches)==1
+          subprocess.run(['bash','-e','-o','pipefail','-c',matches[0]['run']],check=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: A-Day-To-Keep-7.3-Source-PRIVATE
+          path: updated-source/LittleDays.zip
+          if-no-files-found: error
+          retention-days: 30
