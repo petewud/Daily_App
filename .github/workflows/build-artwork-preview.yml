@@ -1,0 +1,138 @@
+name: Build artwork preview 7.2
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install image tools
+        run: pip install pillow numpy scipy
+      - name: Recreate approved v3 artwork
+        run: python scripts/process_artwork_v3.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+      - name: Install Android build tools
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Prepare the working app and all existing repairs
+        shell: bash
+        run: |
+          mkdir -p android-project
+          unzip -q LittleDays.zip -d android-project
+          test -f android-project/settings.gradle
+          echo "sdk.dir=$ANDROID_HOME" > android-project/local.properties
+          cd android-project
+          source=app/src/main/java/uk/co/littledays/MainActivity.java
+          if grep -q A_DAY_TO_KEEP_V6 "$source" || grep -q A_DAY_TO_KEEP_V5 "$source"; then
+            echo "Existing upgraded source found"
+          else
+            for script in update_app.py update_style.py update_refine.py fix_pdf.py; do
+              python3 "../$script"
+            done
+          fi
+          for script in update_polish.py fix_writing.py update_round.py update_preferences.py update_bloom.py update_studio.py update_edgefix.py update_comfort.py fix_calendar.py; do
+            python3 "../$script"
+          done
+      - name: Integrate mapped artwork without reindexing themes
+        working-directory: android-project
+        run: python3 ../scripts/integrate_artwork.py
+      - name: Verify retained repairs and new assets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          root=Path('android-project')
+          s=(root/'app/src/main/java/uk/co/littledays/MainActivity.java').read_text()
+          for marker in ['A_DAY_TO_KEEP_EDGEFIX_703','A_DAY_TO_KEEP_COMFORT_71','A_DAY_TO_KEEP_CALENDAR_711','A_DAY_TO_KEEP_ATLAS_72']:
+              assert marker in s,marker
+          for token in ['class NoteBoard extends ViewGroup','startDragAndDrop(','noteOrder','class RoundedTimeWheel extends NumberPicker','new CalendarChevron(previous)','Previous month','Next month','w.getDecorView().post(() -> {']:
+              assert token in s,token
+          assert 'boolean previous=symbol.equals("<")||symbol.equals("\u2039");' in s
+          assert 'if(controller!=null)controller.setSystemBarsAppearance' in s
+          assert (root/'app/src/main/res/drawable/ic_notification_bunny.xml').is_file()
+          assert any('.setSmallIcon(uk.co.littledays.R.drawable.ic_notification_bunny)' in f.read_text() for f in (root/'app/src/main/java/uk/co/littledays').glob('*.java'))
+          r=json.loads((root/'artwork-integration-report.json').read_text())
+          assert r['theme_array_unchanged'] and r['signing_files_unchanged']
+          assert len(r['mappings'])==43
+          assert len(list((root/'app/src/main/assets/artwork').glob('portrait_*.png')))==42
+          PY
+      - name: Build updated APK
+        working-directory: android-project
+        run: gradle --no-daemon --stacktrace assembleDebug
+      - name: Enable emulator acceleration
+        run: |
+          test -e /dev/kvm
+          sudo chmod 666 /dev/kvm
+      - name: Test startup, calendars, journal, themes and widget registration
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
+          script: |
+            adb wait-for-device
+            sleep 15
+            python3 android-project/tools/smoke_test.py
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Artwork-7.2-Diagnostics
+          path: |
+            startup-diagnostics/
+            android-project/artwork-integration-report.json
+            artwork/output-v3/report.md
+            artwork/output-v3/character-contact-sheet.jpg
+          if-no-files-found: warn
+      - name: Upload APK only after successful tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: A-Day-To-Keep-7.2-Artwork-APK
+          path: android-project/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+      - name: Package complete private source including original signing files
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil,zipfile
+          root=Path('android-project')
+          for source in Path('.').glob('*.py'):
+              shutil.copy2(source,root/source.name)
+          shutil.copytree('scripts',root/'scripts',dirs_exist_ok=True,ignore=shutil.ignore_patterns('__pycache__'))
+          shutil.copytree('artwork/source',root/'artwork/source',dirs_exist_ok=True)
+          shutil.copy2('artwork/theme-cells.json',root/'artwork/theme-cells.json')
+          shutil.copytree('.github/workflows',root/'.github/workflows',dirs_exist_ok=True)
+          Path('updated-source').mkdir(exist_ok=True)
+          with zipfile.ZipFile('updated-source/LittleDays.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in root.rglob('*'):
+                  relative=p.relative_to(root)
+                  if p.is_file() and not any(part in ('build','.gradle','.idea','__pycache__') for part in relative.parts) and p.name!='local.properties':
+                      z.write(p,relative.as_posix())
+          with zipfile.ZipFile('updated-source/LittleDays.zip') as z:
+              assert z.testzip() is None
+              assert 'signing/personal.p12' in z.namelist()
+              assert 'app/src/main/java/uk/co/littledays/KeepCountWidget.java' in z.namelist()
+              assert 'app/src/main/assets/artwork/theme-map.json' in z.namelist()
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: A-Day-To-Keep-7.2-Source-PRIVATE
+          path: updated-source/LittleDays.zip
+          if-no-files-found: error
+          retention-days: 30
