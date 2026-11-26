@@ -1,0 +1,28 @@
+
+ // A_DAY_TO_KEEP_ISLAND_76
+ void openIsland76(){Dialog full=new Dialog(this,android.R.style.Theme_Material_Light_NoActionBar_Fullscreen);IslandGame76 game=new IslandGame76(()->full.dismiss());android.view.Window w=full.getWindow();if(w!=null){w.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0xFF3E72C6));w.setDecorFitsSystemWindows(false);w.setStatusBarColor(Color.TRANSPARENT);w.setNavigationBarColor(Color.TRANSPARENT);w.setNavigationBarContrastEnforced(false);w.setStatusBarContrastEnforced(false);WindowManager.LayoutParams lp=w.getAttributes();lp.layoutInDisplayCutoutMode=WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;w.setAttributes(lp);}full.setContentView(game);full.setOnDismissListener(d->game.leave());full.show();if(w!=null)w.setLayout(-1,-1);}
+ class IslandGame76 extends IslandGame75 {
+  final int[] it=new int[9],seeds=new int[5],buyP={10,10,15,15,20},sellP={18,18,28,25,32,6,10,12,8};
+  final String[] iname={"Tulip","Daisy","Sunflower","Carrot","Tomato","Wood","Apple","Seashell","Wildflower"};
+  final String[] chat={"Isn't the weather lovely?","I love the smell of fresh soil.","Have you tried growing daisies?","Pond water is best for the garden.","I saw a butterfly by the trees.","Everything grows at its own pace.","Apples make the best jam!","Sea water is far too salty for plants.","Pop by the stall any time.","I could nap in this sunshine."};
+  final Bitmap[] itemBmp=new Bitmap[9],packBmp=new Bitmap[5];Bitmap axeBmp,stumpBmp,stallBmp,coinBmp;
+  final Paint vp=new Paint(Paint.ANTI_ALIAS_FLAG);final android.graphics.Path dropPath=new android.graphics.Path();
+  final java.util.HashMap<Integer,long[]> ts=new java.util.HashMap<>();final java.util.ArrayList<float[]> spots=new java.util.ArrayList<>();
+  final java.util.ArrayList<int[]> slots=new java.util.ArrayList<>(),cardI=new java.util.ArrayList<>();final java.util.ArrayList<RectF> slotR=new java.util.ArrayList<>(),cardR=new java.util.ArrayList<>();
+  final float[] stall;final RectF shopX=new RectF();
+  boolean haveAxe,shop,actHit,rDone;int coins,seen,act,aTree,aSpot,aItem,fMask,rItem,shakeKey,lastStrike;long fDay,rDay,gDay;float aT,aTot,hitAt,ax,ay,pourT,shakeT;
+  IslandGame76(Runnable onClose){super(onClose);stall=new float[]{hx+26,hy+2,6,9};things.add(stall);java.util.Collections.sort(things,(u,v)->Float.compare(u[1],v[1]));art76();load76();}
+  void art76(){axeBmp=axeArt();stumpBmp=stumpArt();stallBmp=stallArt();coinBmp=coinArt();for(int i=0;i<5;i++){itemBmp[i]=plantBmp[i][3];packBmp[i]=packetArt(i);}itemBmp[5]=woodArt();itemBmp[6]=appleArt();itemBmp[7]=shellArt();itemBmp[8]=flowerArt();}
+  Bitmap axeArt(){int W=12,H=12;int[] b=new int[W*H];for(int i=0;i<8;i++)P(b,W,2+i,10-i,0xFFA9744B);for(int y=1;y<6;y++)for(int x=6;x<11;x++)P(b,W,x,y,x>=9?0xFFE6E3EA:0xFFB9B3C1);return fin(b,W,H,true);}
+  Bitmap stumpArt(){int W=30,H=38;int[] b=new int[W*H];for(int y=31;y<37;y++)for(int x=11;x<19;x++)b[y*W+x]=x>=16?0xFF6D4429:0xFF8A5A3A;for(int x=12;x<18;x++){b[30*W+x]=0xFFD9B27C;b[31*W+x]=0xFFC79A62;}b[33*W+14]=0xFF6D4429;edge(b,W,H);return Bitmap.createBitmap(b,W,H,Bitmap.Config.ARGB_8888);}
+  Bitmap stallArt(){int W=34,H=30;int[] b=new int[W*H];for(int y=14;y<29;y++)for(int x=3;x<31;x++)b[y*W+x]=y<17?0xFFC9965E:y<20?0xFFE8C48C:0xFFD9AE70;for(int y=3;y<14;y++)for(int x=1;x<33;x++)b[y*W+x]=((x/4)&1)==0?0xFFF29BB5:0xFFFFF4EA;for(int x=1;x<33;x++)b[14*W+x]=((x/4)&1)==0?0xFFE07A98:0xFFEADBCB;for(int y=14;y<29;y++){b[y*W+3]=0xFF8A5A3A;b[y*W+30]=0xFF8A5A3A;}for(int x=6;x<28;x+=5){b[17*W+x]=0xFFE0453C;b[17*W+x+1]=0xFFE0453C;b[16*W+x]=0xFF72BE58;}edge(b,W,H);return Bitmap.createBitmap(b,W,H,Bitmap.Config.ARGB_8888);}
+  Bitmap coinArt(){int W=9,H=9;int[] b=new int[W*H];for(int y=0;y<H;y++)for(int x=0;x<W;x++)if(circ(x,y,4,4,4))b[y*W+x]=circ(x,y,4,4,2)?0xFFFFE27A:0xFFF0B83A;P(b,W,3,3,0xFFFFFFFF);return fin(b,W,H,true);}
+  Bitmap woodArt(){int W=14,H=9;int[] b=new int[W*H];for(int y=1;y<8;y++)for(int x=2;x<13;x++)P(b,W,x,y,y<3?0xFFB98A57:y<6?0xFF9C6E3E:0xFF7E5530);for(int y=1;y<8;y++)for(int x=0;x<3;x++)if(circ(x,y,1,4,3))P(b,W,x,y,y==4&&x==1?0xFF9C6E3E:0xFFE2C28F);return fin(b,W,H,true);}
+  Bitmap appleArt(){int W=8,H=9;int[] b=new int[W*H];for(int y=1;y<9;y++)for(int x=0;x<8;x++)if(circ(x,y,3,5,3))b[y*W+x]=x<3&&y<5?0xFFFF8A7A:0xFFE0453C;P(b,W,4,1,0xFF72BE58);P(b,W,5,0,0xFF72BE58);P(b,W,4,0,0xFF6D4429);return fin(b,W,H,true);}
+  Bitmap shellArt(){int W=9,H=7;int[] b=new int[W*H];for(int y=0;y<H;y++)for(int x=0;x<W;x++){float u=(x-4)/4.2f,v=(y-5.5f)/5.5f;if(u*u+v*v<=1)b[y*W+x]=((x+y)&1)==0?0xFFFFD6E0:0xFFFFB6C8;}P(b,W,4,6,0xFFE08AA0);return fin(b,W,H,true);}
+  Bitmap flowerArt(){int W=7,H=9;int[] b=new int[W*H];for(int y=4;y<9;y++)P(b,W,3,y,0xFF4E9944);P(b,W,2,6,0xFF72BE58);P(b,W,4,7,0xFF72BE58);int[][] q={{3,1},{2,2},{4,2},{3,3},{2,3},{4,3},{3,2}};for(int[] c:q)P(b,W,c[0],c[1],0xFFF29BB5);P(b,W,3,2,0xFFFFD23C);return fin(b,W,H,true);}
+  Bitmap packetArt(int i){int W=12,H=14;int[] b=new int[W*H];int[] col={0xFFF0607E,0xFFD9CFE8,0xFFFFD23C,0xFFF08A2C,0xFFE0453C};for(int y=1;y<13;y++)for(int x=1;x<11;x++)P(b,W,x,y,y<4?(i==1?0xFFB79CE8:col[i]):0xFFFFF1D6);for(int y=7;y<11;y++)P(b,W,5,y,0xFF4E9944);for(int y=5;y<8;y++)for(int x=4;x<8;x++)if(y>=6||x==5||x==6)P(b,W,x,y,col[i]);return fin(b,W,H,true);}
+  long todayNum(){return java.time.LocalDate.now().toEpochDay();}
+  int tkey(float[] o){return Math.round(o[0])*1000+Math.round(o[1]);}
+  float[] treeByKey(int k){for(float[] o:things){int t=(int)o[2];if((t<=1||t==5)&&tkey(o)==k)return o;}return null;}
+  void fixSeed(){if(tool!=2||seeds[seed]>0)return;for(int i=0;i<5;i++)if(seeds[i]>0){seed=i;return;}tool=0;}
