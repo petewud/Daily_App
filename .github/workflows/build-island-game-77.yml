@@ -1,0 +1,78 @@
+name: Build island game 7.7.0
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pillow numpy scipy pyyaml
+      - name: Recreate approved artwork
+        run: python scripts/process_artwork_v3.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Prepare working 7.3.3 and add island game
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess,yaml,json
+          steps=yaml.safe_load(Path('.github/workflows/build-notes-widget-polish.yml').read_text())['jobs']['build']['steps']
+          matches=[s for s in steps if s.get('name')=='Prepare working 7.3.2 and refine Notes and widget']
+          assert len(matches)==1
+          subprocess.run(['bash','-e','-o','pipefail','-c',matches[0]['run']],check=True)
+          for name in ['update_island_740.py','update_island_741.py','update_island_750.py','update_island_760.py','update_island_770.py']:
+              subprocess.run(['python3','../scripts/'+name],cwd='android-project',check=True)
+          s=Path('android-project/app/src/main/java/uk/co/littledays/MainActivity.java').read_text()
+          for token in ['A_DAY_TO_KEEP_ISLAND_77','class IslandGame77','openIsland77();','Game mode (demo)','float sn(float v)']:
+              assert token in s,token
+          assert json.loads(Path('android-project/ui-amendments-report.json').read_text())['version']=='7.7.0'
+          PY
+      - name: Build updated APK
+        working-directory: android-project
+        run: gradle --no-daemon --stacktrace assembleDebug
+      - name: Enable emulator acceleration
+        run: |
+          test -e /dev/kvm
+          sudo chmod 666 /dev/kvm
+      - name: Test startup, calendars, journal, themes and widgets
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
+          script: |
+            adb wait-for-device
+            sleep 15
+            python3 android-project/tools/smoke_test.py
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: UI-7.7.0-Diagnostics
+          path: |
+            startup-diagnostics/
+            android-project/ui-amendments-report.json
+          if-no-files-found: warn
+      - name: Upload APK after successful tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: A-Day-To-Keep-7.7.0-Island-Game-APK
+          path: android-project/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
