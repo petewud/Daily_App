@@ -34,10 +34,11 @@ jobs:
           assert len(matches)==1
           subprocess.run(['bash','-e','-o','pipefail','-c',matches[0]['run']],check=True)
           subprocess.run(['python3','../scripts/update_island_740.py'],cwd='android-project',check=True)
+          subprocess.run(['python3','../scripts/update_island_741.py'],cwd='android-project',check=True)
           s=Path('android-project/app/src/main/java/uk/co/littledays/MainActivity.java').read_text()
-          for token in ['A_DAY_TO_KEEP_ISLAND_74','installGameTap74();','class IslandDemo74','Game mode (demo)']:
+          for token in ['A_DAY_TO_KEEP_ISLAND_74','installGameTap74();','class IslandDemo74','Game mode (demo)','ISLAND_SMOOTH_741','float sn(float v)']:
               assert token in s,token
-          assert json.loads(Path('android-project/ui-amendments-report.json').read_text())['version']=='7.4.0'
+          assert json.loads(Path('android-project/ui-amendments-report.json').read_text())['version']=='7.4.1'
           PY
       - name: Build updated APK
         working-directory: android-project
@@ -64,7 +65,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: UI-7.4.0-Diagnostics
+          name: UI-7.4.1-Diagnostics
           path: |
             startup-diagnostics/
             android-project/ui-amendments-report.json
@@ -72,6 +73,6 @@ jobs:
       - name: Upload APK after successful tests
         uses: actions/upload-artifact@v4
         with:
-          name: A-Day-To-Keep-7.4.0-Island-Demo-APK
+          name: A-Day-To-Keep-7.4.1-Island-Demo-APK
           path: android-project/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
